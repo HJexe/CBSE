@@ -3,7 +3,7 @@
 
 Free, centralized notes, PYQs, and study materials for Class 12 board students.
 
-🌐 **Live:** [project-1pm38.vercel.app](https://project-1pm38.vercel.app)
+🌐 **Live website:** https://cbse-study-hub.vercel.app/
 
 ## Subjects
 Accountancy · Business Studies · Economics · English · Mathematics · Physics · Chemistry · Biology 
