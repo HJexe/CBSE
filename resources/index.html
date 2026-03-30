@@ -499,7 +499,67 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  // 🔥 SUPABASE INIT
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+// Track current resource
+let currentResourceId = null;
+// ⭐ STAR CLICK HANDLER
+const starButtons = document.querySelectorAll(".star-btn");
+
+starButtons.forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const rating = parseFloat(btn.dataset.star);
+
+    if (!currentResourceId) {
+      alert("No resource selected");
+      return;
+    }
+
+    const { error } = await supabase.rpc("add_rating", {
+      p_resource_id: currentResourceId,
+      p_stars: rating
+    });
+
+    if (error) {
+      console.error(error);
+      alert("Error saving rating");
+    } else {
+      console.log("Rating saved:", rating);
+      loadAverageRating();
+    }
+  });
+});
+  async function loadAverageRating() {
+  if (!currentResourceId) return;
+
+  const { data, error } = await supabase
+    .from("resource_ratings")
+    .select("stars")
+    .eq("resource_id", currentResourceId);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  if (!data.length) {
+    document.getElementById("vpRatingAvg").textContent = "No ratings yet";
+    return;
+  }
+
+  const avg =
+    data.reduce((sum, r) => sum + parseFloat(r.stars), 0) / data.length;
+
+  document.getElementById("vpRatingAvg").innerHTML =
+    `⭐ <span>${avg.toFixed(1)}</span> (${data.length})`;
+}
   /* ══════════ DATA ══════════ */
 
   var categories = [
@@ -782,7 +842,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Populate dropdown with sibling files
     populatePicker(_vpSubj, resType, url);
 
-    document.getElementById('vpFrame').src = '';
+    document.getElementById('vpFrame').src = url ;
+    currentResourceId = url;
+loadAverageRating();
     document.getElementById('vpSpinner').style.display = 'flex';
     document.getElementById('screenArea').classList.add('hidden');
     document.getElementById('viewerPanel').classList.add('open');
