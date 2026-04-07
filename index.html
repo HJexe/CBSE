@@ -11,6 +11,7 @@
   <style>
     :root {
       --bg:        #0b0b0d;
+      --bg-raw:    11,11,13;
       --surface:   #111113;
       --surface-2: #18181b;
       --border:    #222225;
@@ -29,6 +30,7 @@
 
     html[data-theme="light"] {
       --bg:        #fafafa;
+      --bg-raw:    250,250,250;
       --surface:   #f4f4f6;
       --surface-2: #ececf0;
       --border:    #e0e0e4;
@@ -51,6 +53,11 @@
     :root[data-color="lime"]    { --accent:#84cc16; --accent-2:#a3e635; --accent-3:#65a30d; --glow:132,204,22; }
     :root[data-color="sky"]     { --accent:#0ea5e9; --accent-2:#38bdf8; --accent-3:#0284c7; --glow:14,165,233; }
     :root[data-color="pink"]    { --accent:#ec4899; --accent-2:#f472b6; --accent-3:#db2777; --glow:236,72,153; }
+    :root[data-color="red"]     { --accent:#ef4444; --accent-2:#f87171; --accent-3:#dc2626; --glow:239,68,68; }
+    :root[data-color="fuchsia"] { --accent:#d946ef; --accent-2:#e879f9; --accent-3:#c026d3; --glow:217,70,239; }
+    :root[data-color="yellow"]  { --accent:#eab308; --accent-2:#facc15; --accent-3:#ca8a04; --glow:234,179,8; }
+    :root[data-color="green"]   { --accent:#22c55e; --accent-2:#4ade80; --accent-3:#16a34a; --glow:34,197,94; }
+    :root[data-color="slate"]   { --accent:#64748b; --accent-2:#94a3b8; --accent-3:#475569; --glow:100,116,139; }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; }
@@ -99,9 +106,11 @@
       height: 54px;
       flex-shrink: 0;
       border-bottom: 1px solid var(--border);
-      background: rgba(var(--bg-raw, 11,11,13), 0.85);
+      background: rgba(var(--bg-raw), 0.85);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
+      position: relative;
+      z-index: 100; /* Fixed: keeps nav strictly above decorative SVGs */
     }
     .brand {
       font-family: var(--font-d);
@@ -112,71 +121,301 @@
     .brand span { color: var(--accent-2); }
     .nav-right { display: flex; align-items: center; gap: .6rem; position: relative; }
 
-    .icon-btn {
+    /* ── Theme Picker (attached dropdown) ── */
+    .theme-picker {
+      position: relative;
+    }
+    .theme-picker-btn {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      width: 36px; height: 36px;
+      gap: .4rem;
       background: var(--surface-2);
       color: var(--muted);
+      font-size: .78rem;
+      font-weight: 500;
+      padding: .5rem .95rem;
       border-radius: 8px;
       border: 1px solid var(--border);
+      height: 36px;
       transition: all 0.2s;
-      flex-shrink: 0;
     }
-    .icon-btn:hover {
+    .theme-picker-btn:hover,
+    .theme-picker-btn.active {
       color: var(--text);
       border-color: var(--accent-2);
       background: var(--surface);
       box-shadow: 0 0 0 3px rgba(var(--glow),.12);
     }
+    .theme-picker-btn .active-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent-2);
+      flex-shrink: 0;
+      box-shadow: 0 0 6px rgba(var(--glow),.5);
+      transition: background 0.3s;
+    }
 
-    /* Color picker */
-    .color-picker { position: relative; }
-    .color-palette {
+    /* Dropdown panel — SOLID opaque */
+    .theme-dropdown {
       display: none;
       position: absolute;
-      top: calc(100% + .6rem); right: 0;
-      background: var(--surface);
-      border: 1px solid var(--border);
+      top: calc(100% + 8px);
+      right: 0;
+      width: 300px;
+      background: #1a1a1f;
+      border: 1px solid #333338;
       border-radius: 12px;
-      padding: 0.9rem;
-      z-index: 200;
-      box-shadow: 0 20px 60px rgba(0,0,0,.4);
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.55rem;
-      min-width: 176px;
+      z-index: 300;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 0 1px #2a2a30;
+      overflow: hidden;
+      animation: themeDropIn .18s ease;
     }
-    .color-palette.show { display: grid; }
-    .color-swatch {
-      width: 34px; height: 34px;
+    html[data-theme="light"] .theme-dropdown {
+      background: #ffffff;
+      border-color: #d4d4d8;
+      box-shadow: 0 20px 60px rgba(0,0,0,.12), 0 0 0 1px #e4e4e7;
+    }
+    .theme-dropdown.show { display: block; }
+
+    @keyframes themeDropIn {
+      from { opacity: 0; transform: translateY(-6px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Dropdown Header */
+    .td-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .75rem .9rem;
+      border-bottom: 1px solid #2a2a30;
+      background: #16161b;
+    }
+    html[data-theme="light"] .td-header {
+      border-bottom-color: #e4e4e7;
+      background: #f9fafb;
+    }
+    .td-title {
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: #e4e4e7;
+    }
+    html[data-theme="light"] .td-title {
+      color: #18181b;
+    }
+    .td-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      background: transparent;
+      color: #71717a;
+      transition: all .15s;
+    }
+    .td-close:hover {
+      background: #27272a;
+      color: #e4e4e7;
+    }
+    html[data-theme="light"] .td-close {
+      color: #a1a1aa;
+    }
+    html[data-theme="light"] .td-close:hover {
+      background: #f4f4f5;
+      color: #18181b;
+    }
+
+    /* Dropdown Body */
+    .td-body {
+      padding: .8rem .9rem .9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Section label */
+    .td-label {
+      font-size: .58rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #71717a;
+      margin-bottom: .5rem;
+    }
+    html[data-theme="light"] .td-label {
+      color: #a1a1aa;
+    }
+
+    /* Mode toggle row */
+    .td-mode-row {
+      display: flex;
+      gap: 6px;
+    }
+    .td-mode-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .4rem;
+      padding: .5rem .3rem;
       border-radius: 8px;
-      border: 2px solid transparent;
+      font-size: .72rem;
+      font-weight: 500;
+      color: #a1a1aa;
+      background: #111114;
+      border: 1px solid #2a2a30;
+      transition: all .18s ease;
       cursor: pointer;
-      transition: all 0.2s;
+    }
+    html[data-theme="light"] .td-mode-btn {
+      color: #71717a;
+      background: #f4f4f5;
+      border-color: #e4e4e7;
+    }
+    .td-mode-btn svg {
+      width: 14px; height: 14px;
+      flex-shrink: 0;
+    }
+    .td-mode-btn:hover {
+      color: #e4e4e7;
+      border-color: #3f3f46;
+    }
+    html[data-theme="light"] .td-mode-btn:hover {
+      color: #18181b;
+      border-color: #d4d4d8;
+    }
+    .td-mode-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      box-shadow: 0 2px 12px rgba(var(--glow),.4);
+    }
+    .td-mode-btn.active svg { color: #fff; }
+
+    /* Fixed: Merged Colors and Names into a single structured grid */
+    .td-colors {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px 8px;
+    }
+    .td-color-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
       position: relative;
     }
-    .color-swatch:hover { transform: scale(1.12); }
-    .color-swatch.active { border-color: var(--text); }
-    .color-swatch.active::after {
-      content: '\2713';
+    .td-swatch {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      position: relative;
+      transition: all .18s ease;
+      border: 2.5px solid transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,.3);
+      pointer-events: none; /* Let wrapper handle events securely */
+    }
+    .td-color-wrapper:hover .td-swatch {
+      transform: scale(1.12);
+      z-index: 2;
+      box-shadow: 0 4px 12px rgba(0,0,0,.4);
+    }
+    .td-color-wrapper.active .td-swatch {
+      border-color: #ffffff;
+      box-shadow: 0 0 0 2px #1a1a1f, 0 0 0 4px #ffffff;
+    }
+    html[data-theme="light"] .td-color-wrapper.active .td-swatch {
+      box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #18181b;
+    }
+    .td-swatch-check {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: .7rem; color: #fff;
-      text-shadow: 0 1px 3px rgba(0,0,0,.6);
+      opacity: 0;
+      transform: scale(.4);
+      transition: all .18s ease;
+      pointer-events: none;
     }
-    .color-swatch.indigo  { background: #818cf8; }
-    .color-swatch.blue    { background: #60a5fa; }
-    .color-swatch.purple  { background: #c084fc; }
-    .color-swatch.emerald { background: #34d399; }
-    .color-swatch.rose    { background: #fb7185; }
-    .color-swatch.cyan    { background: #22d3ee; }
-    .color-swatch.amber   { background: #fbbf24; }
-    .color-swatch.teal    { background: #2dd4bf; }
-    .color-swatch.orange  { background: #fb923c; }
-    .color-swatch.lime    { background: #a3e635; }
-    .color-swatch.sky     { background: #38bdf8; }
-    .color-swatch.pink    { background: #f472b6; }
+    .td-color-wrapper.active .td-swatch-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .td-swatch-check svg {
+      width: 14px; height: 14px;
+      color: #fff;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,.5));
+    }
+    .td-color-name {
+      text-align: center;
+      font-size: .52rem;
+      font-weight: 500;
+      color: #71717a;
+      letter-spacing: .02em;
+      transition: color .15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+    html[data-theme="light"] .td-color-name {
+      color: #a1a1aa;
+    }
+    .td-color-wrapper:hover .td-color-name {
+      color: #a1a1aa;
+    }
+    html[data-theme="light"] .td-color-wrapper:hover .td-color-name {
+      color: #71717a;
+    }
+    .td-color-wrapper.active .td-color-name {
+      color: var(--accent-2);
+      font-weight: 600;
+    }
+    html[data-theme="light"] .td-color-wrapper.active .td-color-name {
+      color: var(--accent-3);
+    }
+
+    /* Footer row */
+    .td-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: .3rem;
+    }
+    .td-reset {
+      font-size: .65rem;
+      font-weight: 500;
+      color: #71717a;
+      background: transparent;
+      border: 1px solid #2a2a30;
+      border-radius: 6px;
+      padding: .3rem .7rem;
+      transition: all .15s;
+      cursor: pointer;
+    }
+    html[data-theme="light"] .td-reset {
+      color: #a1a1aa;
+      border-color: #e4e4e7;
+    }
+    .td-reset:hover {
+      color: #e4e4e7;
+      border-color: #3f3f46;
+      background: #111114;
+    }
+    html[data-theme="light"] .td-reset:hover {
+      color: #18181b;
+      border-color: #d4d4d8;
+      background: #f4f4f5;
+    }
+    .td-saved {
+      font-size: .65rem;
+      font-weight: 500;
+      color: var(--accent-2);
+      opacity: 0;
+      transition: opacity .25s ease;
+    }
+    .td-saved.visible { opacity: 1; }
 
     /* Disclaimer */
     .disclaimer-btn {
@@ -509,6 +748,11 @@
       .bottom-meta { flex-wrap: wrap; gap: .8rem; }
       .deco-svg { transform: scale(.5); }
       .deco-compass, .deco-globe { display: none; }
+      .theme-picker-btn span.btn-label { display: none; }
+      .theme-dropdown {
+        right: -40px;
+        width: 272px;
+      }
     }
   </style>
 </head>
@@ -520,41 +764,71 @@
     <span class="brand">CBSE<span>Hub</span></span>
     <div class="nav-right">
 
-      <button class="icon-btn" onclick="toggleTheme()" title="Toggle light/dark mode">
-        <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="5"/>
-          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-        </svg>
-      </button>
-
-      <div class="color-picker">
-        <button class="icon-btn" onclick="toggleColorPalette()" title="Change accent color">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
-            <path d="M12 2v20M2 12h20" stroke-width="1"/>
-            <path d="M12 2a10 10 0 0 1 0 20" fill="rgba(var(--glow),.2)"/>
+      <div class="theme-picker" id="themePicker">
+        <button class="theme-picker-btn" id="themePickerBtn" title="Customize theme">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="13.5" cy="6.5" r="2.5"/>
+            <path d="M17.5 10.5a2.5 2.5 0 1 0 0-5"/>
+            <circle cx="8.5" cy="13.5" r="2.5"/>
+            <path d="M6.5 18.5a2.5 2.5 0 1 0 0-5"/>
+            <circle cx="12" cy="17" r="2.5"/>
+            <path d="M13.5 6.5l-2 4"/>
+            <path d="M17.5 10.5l-4.5 3"/>
+            <path d="M8.5 13.5l2 4"/>
+            <path d="M6.5 18.5l4 0"/>
           </svg>
+          <span class="btn-label">Theme</span>
+          <span class="active-dot"></span>
         </button>
-        <div class="color-palette" id="colorPalette">
-          <div class="color-swatch indigo  active" onclick="setColor('indigo')"  title="Indigo"></div>
-          <div class="color-swatch blue"          onclick="setColor('blue')"    title="Blue"></div>
-          <div class="color-swatch purple"        onclick="setColor('purple')"  title="Purple"></div>
-          <div class="color-swatch emerald"       onclick="setColor('emerald')" title="Emerald"></div>
-          <div class="color-swatch rose"          onclick="setColor('rose')"    title="Rose"></div>
-          <div class="color-swatch cyan"          onclick="setColor('cyan')"    title="Cyan"></div>
-          <div class="color-swatch amber"         onclick="setColor('amber')"   title="Amber"></div>
-          <div class="color-swatch teal"          onclick="setColor('teal')"    title="Teal"></div>
-          <div class="color-swatch orange"        onclick="setColor('orange')"  title="Orange"></div>
-          <div class="color-swatch lime"          onclick="setColor('lime')"    title="Lime"></div>
-          <div class="color-swatch sky"           onclick="setColor('sky')"     title="Sky"></div>
-          <div class="color-swatch pink"          onclick="setColor('pink')"    title="Pink"></div>
+
+        <div class="theme-dropdown" id="themeDropdown">
+          <div class="td-header">
+            <span class="td-title">Theme</span>
+            <button class="td-close" id="tdClose" type="button">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="td-body">
+
+            <div>
+              <p class="td-label">Appearance</p>
+              <div class="td-mode-row">
+                <button class="td-mode-btn" id="modeDark" data-mode="dark">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                  </svg>
+                  Dark
+                </button>
+                <button class="td-mode-btn" id="modeLight" data-mode="light">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                  </svg>
+                  Light
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <p class="td-label">Accent Color</p>
+              <div class="td-colors" id="tdColors"></div>
+            </div>
+
+            <div class="td-footer">
+              <button class="td-reset" id="tdReset">Reset</button>
+              <span class="td-saved" id="tdSaved">Saved</span>
+            </div>
+
+          </div>
         </div>
       </div>
 
-      <button class="disclaimer-btn" onclick="toggleDisc()">
+      <button class="disclaimer-btn" id="discBtn" type="button">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
           <line x1="12" y1="16" x2="12" y2="12"/>
@@ -565,7 +839,7 @@
       <div class="disc-drop" id="discDrop">
         <p class="disc-label">Disclaimer</p>
         <p>CBSEHub is unofficial. All materials are shared for educational purposes — we hold no ownership or copyright over any content.</p>
-        <p>If you're the rightful owner of any resource, email <a href="mailto:prattytea@gmail.com">prattytea@gmail.com</a> and we'll remove it promptly.</p>
+        <p>If you're the rightful owner of any resource, email <a href="mailto:contact@csbehub.in">contact@csbehub.in</a> and we'll remove it promptly.</p>
       </div>
 
       <a href="/resources" class="nav-cta">
@@ -756,7 +1030,26 @@
 
   <script>
     const html = document.documentElement;
-    const themeIcon = document.getElementById('themeIcon');
+
+    const colors = [
+      { name: 'Indigo',  key: 'indigo',  swatch: '#818cf8' },
+      { name: 'Blue',    key: 'blue',    swatch: '#60a5fa' },
+      { name: 'Purple',  key: 'purple',  swatch: '#c084fc' },
+      { name: 'Emerald', key: 'emerald', swatch: '#34d399' },
+      { name: 'Rose',    key: 'rose',    swatch: '#fb7185' },
+      { name: 'Cyan',    key: 'cyan',    swatch: '#22d3ee' },
+      { name: 'Amber',   key: 'amber',   swatch: '#fbbf24' },
+      { name: 'Teal',    key: 'teal',    swatch: '#2dd4bf' },
+      { name: 'Orange',  key: 'orange',  swatch: '#fb923c' },
+      { name: 'Lime',    key: 'lime',    swatch: '#a3e635' },
+      { name: 'Sky',     key: 'sky',     swatch: '#38bdf8' },
+      { name: 'Pink',    key: 'pink',    swatch: '#f472b6' },
+      { name: 'Red',     key: 'red',     swatch: '#f87171' },
+      { name: 'Fuchsia', key: 'fuchsia', swatch: '#e879f9' },
+      { name: 'Yellow',  key: 'yellow',  swatch: '#facc15' },
+      { name: 'Green',   key: 'green',   swatch: '#4ade80' },
+      { name: 'Slate',   key: 'slate',   swatch: '#94a3b8' },
+    ];
 
     const subjects = [
       { name: 'Physics',           icon: '⚛️' },
@@ -777,68 +1070,189 @@
       { name: 'Fine Arts',         icon: '🎨' },
     ];
 
-    function initTheme() {
-      const t = localStorage.getItem('theme') || 'dark';
-      const c = localStorage.getItem('color') || 'indigo';
-      html.setAttribute('data-theme', t);
-      html.setAttribute('data-color', c);
-      updateThemeIcon(t);
-      updateColorActive(c);
+    /* ── Theme System ── */
+
+    let savedTimer = null;
+
+    function toggleThemeDropdown() {
+      var dd = document.getElementById('themeDropdown');
+      var btn = document.getElementById('themePickerBtn');
+      if (dd.classList.contains('show')) {
+        dd.classList.remove('show');
+        btn.classList.remove('active');
+      } else {
+        dd.classList.add('show');
+        btn.classList.add('active');
+        syncDropdownState();
+      }
     }
 
-    function toggleTheme() {
-      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-      updateThemeIcon(next);
+    function closeThemeDropdown() {
+      document.getElementById('themeDropdown').classList.remove('show');
+      document.getElementById('themePickerBtn').classList.remove('active');
     }
 
-    function updateThemeIcon(theme) {
-      themeIcon.innerHTML = theme === 'light'
-        ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
-        : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+    function flashSaved() {
+      var el = document.getElementById('tdSaved');
+      el.classList.add('visible');
+      if (savedTimer) clearTimeout(savedTimer);
+      savedTimer = setTimeout(function() { el.classList.remove('visible'); }, 1200);
     }
 
-    function toggleColorPalette() {
-      document.getElementById('colorPalette').classList.toggle('show');
+    function syncDropdownState() {
+      var theme = html.getAttribute('data-theme') || 'dark';
+      var color = html.getAttribute('data-color') || 'indigo';
+
+      document.getElementById('modeDark').classList.toggle('active', theme === 'dark');
+      document.getElementById('modeLight').classList.toggle('active', theme === 'light');
+
+      var wrappers = document.querySelectorAll('.td-color-wrapper');
+      for (var i = 0; i < wrappers.length; i++) {
+        if (wrappers[i].getAttribute('data-color') === color) {
+          wrappers[i].classList.add('active');
+        } else {
+          wrappers[i].classList.remove('active');
+        }
+      }
+    }
+
+    function setMode(mode) {
+      html.setAttribute('data-theme', mode);
+      try { localStorage.setItem('theme', mode); } catch(e) {}
+      syncDropdownState();
+      flashSaved();
     }
 
     function setColor(color) {
       html.setAttribute('data-color', color);
-      localStorage.setItem('color', color);
-      updateColorActive(color);
-      document.getElementById('colorPalette').classList.remove('show');
+      try { localStorage.setItem('color', color); } catch(e) {}
+      syncDropdownState();
+      flashSaved();
     }
 
-    function updateColorActive(color) {
-      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
-      const el = document.querySelector('.color-swatch.' + color);
-      if (el) el.classList.add('active');
+    function resetTheme() {
+      html.setAttribute('data-theme', 'dark');
+      html.setAttribute('data-color', 'indigo');
+      try { localStorage.setItem('theme', 'dark'); localStorage.setItem('color', 'indigo'); } catch(e) {}
+      syncDropdownState();
+      flashSaved();
+    }
+
+    function buildSwatches() {
+      var grid = document.getElementById('tdColors');
+      var htmlStr = '';
+
+      for (var i = 0; i < colors.length; i++) {
+        var c = colors[i];
+        /* Merged the swatch box and the name label into one unified, clickable wrapper element */
+        htmlStr += '<div class="td-color-wrapper" data-color="' + c.key + '">' +
+                     '<button class="td-swatch" type="button" tabindex="-1" style="background:' + c.swatch + '" title="' + c.name + '">' +
+                       '<span class="td-swatch-check">' +
+                         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
+                           '<polyline points="20 6 9 17 4 12"/>' +
+                         '</svg>' +
+                       '</span>' +
+                     '</button>' +
+                     '<span class="td-color-name">' + c.name + '</span>' +
+                   '</div>';
+      }
+
+      grid.innerHTML = htmlStr;
+
+      grid.addEventListener('click', function(e) {
+        var wrapper = e.target.closest('.td-color-wrapper');
+        if (wrapper && wrapper.getAttribute('data-color')) {
+          setColor(wrapper.getAttribute('data-color'));
+        }
+      });
+    }
+
+    /* ── Init ── */
+
+    function initTheme() {
+      var t = 'dark';
+      var c = 'indigo';
+      try {
+        t = localStorage.getItem('theme') || 'dark';
+        c = localStorage.getItem('color') || 'indigo';
+      } catch(e) {}
+      html.setAttribute('data-theme', t);
+      html.setAttribute('data-color', c);
+    }
+
+    function initCarousel() {
+      var track = document.getElementById('carouselTrack');
+      var buildSet = function() {
+        var out = '';
+        for (var i = 0; i < subjects.length; i++) {
+          out += '<span class="subject-item"><span class="subject-pill"><span class="subject-icon">' + subjects[i].icon + '</span>' + subjects[i].name + '</span><span class="subject-pipe">|</span></span>';
+        }
+        return out;
+      };
+      var set = buildSet();
+      track.innerHTML = set + set + set + set;
     }
 
     function toggleDisc() {
       document.getElementById('discDrop').classList.toggle('show');
     }
 
-    function initCarousel() {
-      const track = document.getElementById('carouselTrack');
-      const buildSet = () => subjects.map(s =>
-        '<span class="subject-item"><span class="subject-pill"><span class="subject-icon">' + s.icon + '</span>' + s.name + '</span><span class="subject-pipe">|</span></span>'
-      ).join('');
-      track.innerHTML = buildSet() + buildSet() + buildSet() + buildSet();
-    }
+    /* ── Event Listeners ── */
 
+    document.addEventListener('DOMContentLoaded', function() {
+      initTheme();
+      buildSwatches();
+      initCarousel();
+
+      /* Mode buttons */
+      document.getElementById('modeDark').addEventListener('click', function() {
+        setMode('dark');
+      });
+      document.getElementById('modeLight').addEventListener('click', function() {
+        setMode('light');
+      });
+
+      /* Reset button */
+      document.getElementById('tdReset').addEventListener('click', function() {
+        resetTheme();
+      });
+
+      /* Theme picker toggle */
+      document.getElementById('themePickerBtn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleThemeDropdown();
+      });
+
+      /* Close dropdown button */
+      document.getElementById('tdClose').addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeThemeDropdown();
+      });
+
+      /* Disclaimer toggle */
+      document.getElementById('discBtn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleDisc();
+      });
+    });
+
+    /* Close dropdowns on outside click */
     document.addEventListener('click', function(e) {
       if (!e.target.closest('.disclaimer-btn') && !e.target.closest('.disc-drop')) {
         document.getElementById('discDrop').classList.remove('show');
       }
-      if (!e.target.closest('.color-picker')) {
-        document.getElementById('colorPalette').classList.remove('show');
+      if (!e.target.closest('.theme-picker')) {
+        closeThemeDropdown();
       }
     });
 
-    initTheme();
-    initCarousel();
+    /* Close on Escape */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeThemeDropdown();
+        document.getElementById('discDrop').classList.remove('show');
+      }
+    });
   </script>
 </body>
 </html>
